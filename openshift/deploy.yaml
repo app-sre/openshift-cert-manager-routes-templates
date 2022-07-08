@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: Template
+metadata:
+  name: openshift-cert-manager-template
+objects:
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: cert-manager-openshift-routes
+  rules:
+  - apiGroups:
+    - route.openshift.io
+    resources:
+    - routes
+    verbs:
+    - get
+    - list
+    - watch
+    - patch
+    - update
+  - apiGroups:
+    - route.openshift.io
+    resources:
+    - routes/finalizers
+    verbs:
+    - update
+  - apiGroups:
+    - route.openshift.io
+    resources:
+    - routes/custom-host
+    verbs:
+    - create
+    - update
+  - apiGroups:
+    - cert-manager.io
+    resources:
+    - certificaterequests
+    verbs:
+    - create
+    - get
+    - list
+    - watch
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - certificaterequests/status
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs:
+    - create
+    - patch
+  - apiGroups:
+    - coordination.k8s.io
+    resources:
+    - leases
+    verbs:
+    - create
+    - get
+    - list
+    - update
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: cert-manager-openshift-routes
+    namespace: cert-manager
+  automountServiceAccountToken: false
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: cert-manager-openshift-routes
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cert-manager-openshift-routes
+  subjects:
+  - kind: ServiceAccount
+    name: cert-manager-openshift-routes
+    namespace: cert-manager
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: cert-manager-openshift-routes
+    namespace: cert-manager
+    labels:
+      app.kubernetes.io/name: cert-manager-openshift-routes
+      app.kubernetes.io/version: ${RELEASE}
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/part-of: cert-manager
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: cert-manager-openshift-routes
+        app.kubernetes.io/version: ${RELEASE}
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/part-of: cert-manager
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: cert-manager-openshift-routes
+          app.kubernetes.io/version: ${RELEASE}
+          app.kubernetes.io/component: controller
+          app.kubernetes.io/part-of: cert-manager
+      spec:
+        serviceAccountName: cert-manager-openshift-routes
+        automountServiceAccountToken: true
+        containers:
+          - name: cert-manager-openshift-routes
+            image: ${IMAGE}:${RELEASE}
+            resources:
+              requests:
+                cpu: ${CPU_REQUESTS}
+                memory: ${MEMORY_REQUESTS}
+              limits:
+                cpu: ${CPU_LIMITS}
+                memory: ${MEMORY_LIMITS}
+            args:
+            - -v=5
+            ports:
+            - containerPort: 6060
+              name: readiness
+              protocol: TCP
+            - containerPort: 9042
+              name: metrics
+              protocol: TCP
+            readinessProbe:
+              httpGet:
+                port: readiness
+                path: "/readyz"
+              initialDelaySeconds: 3
+              periodSeconds: 5
+              timeoutSeconds: 3
+parameters:
+- name: IMAGE
+  value: ghcr.io/cert-manager/cert-manager-openshift-routes
+- name: RELEASE
+  value: 0.1.2
+- name: CPU_REQUESTS
+  value: 50m
+- name: MEMORY_REQUESTS
+  value: 50Mi
+- name: CPU_LIMITS
+  value: 100m
+- name: MEMORY_LIMITS
+  value: 100Mi
+- name: CERT_MANAGER_NAMESPACE
+  value: openshift-cert-manager
