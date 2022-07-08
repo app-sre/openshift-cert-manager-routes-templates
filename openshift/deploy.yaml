@@ -69,7 +69,7 @@ objects:
   kind: ServiceAccount
   metadata:
     name: cert-manager-openshift-routes
-    namespace: cert-manager
+    namespace: ${CERT_MANAGER_NAMESPACE}
   automountServiceAccountToken: false
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRoleBinding
@@ -82,12 +82,12 @@ objects:
   subjects:
   - kind: ServiceAccount
     name: cert-manager-openshift-routes
-    namespace: cert-manager
+    namespace: ${CERT_MANAGER_NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     name: cert-manager-openshift-routes
-    namespace: cert-manager
+    namespace: ${CERT_MANAGER_NAMESPACE}
     labels:
       app.kubernetes.io/name: cert-manager-openshift-routes
       app.kubernetes.io/version: ${RELEASE}
