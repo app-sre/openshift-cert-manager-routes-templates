@@ -123,6 +123,7 @@ objects:
                 memory: ${MEMORY_LIMITS}
             args:
             - -v=5
+            - --leader-election-namespace=${CERT_MANAGER_NAMESPACE}
             ports:
             - containerPort: 6060
               name: readiness
