@@ -67,6 +67,14 @@ objects:
     - get
     - list
     - update
+  - apiGroups:
+    - ""
+    resources:
+    - secrets
+    verbs:
+    - get
+    - list
+    - watch
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
