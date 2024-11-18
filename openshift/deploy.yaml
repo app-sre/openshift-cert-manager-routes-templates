@@ -36,6 +36,7 @@ objects:
     - cert-manager.io
     resources:
     - certificaterequests
+    - certificates
     verbs:
     - create
     - get
@@ -45,6 +46,7 @@ objects:
       - cert-manager.io
     resources:
       - certificaterequests/status
+      - certificates/status
     verbs:
       - get
       - list
